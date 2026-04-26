@@ -152,6 +152,66 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent-gold);
         }
+        .search-container {
+            max-width: 600px;
+            margin: 20px auto 0;
+            position: relative;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #search-input:focus {
+            border-color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(197, 168, 109, 0.1);
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: var(--accent-gold);
+            border: none;
+            border-radius: 6px;
+            color: var(--bg-deep);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .character-card:hover .download-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .download-btn:hover {
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(197, 168, 109, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -160,54 +220,128 @@
     <header>
         <h1>Reverse 1999</h1>
         <div class="subtitle">Storm Preservation Initiative // Character Catalog</div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for character ID or name...">
+        </div>
     </header>
 
     <div id="gallery-container">
         <!-- Will be populated via JS -->
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
-        // Track mouse for ambient glow
         const glow = document.getElementById('glow');
+        const container = document.getElementById('gallery-container');
+        const searchInput = document.getElementById('search-input');
+        const BASE_RAW_URL = 'https://raw.githubusercontent.com/myssal/Reverse-1999-CN-Asset/master/live2d/roles/';
+        
+        let allCharacters = [];
+        let fileMap = {};
+
+        // Track mouse for ambient glow
         window.addEventListener('mousemove', e => {
             glow.style.setProperty('--mx', e.clientX + 'px');
             glow.style.setProperty('--my', e.clientY + 'px');
         });
 
-        // Fetch character data
-        async function loadGallery() {
-            const container = document.getElementById('gallery-container');
-            
+        async function init() {
             try {
-                // We'll generate this list from the folder structure
-                const response = await fetch('character_list.json');
-                const characters = await response.json();
-
-                characters.forEach(char => {
-                    const card = document.createElement('div');
-                    card.className = 'character-card';
-                    
-                    const nameParts = char.split('_');
-                    const id = nameParts[0];
-                    const name = nameParts.slice(1).join(' ').replace('.png', '');
-
-                    card.innerHTML = `
-                        <img src="characters/${char}" alt="${name}" loading="lazy">
-                        <div class="card-overlay">
-                            <span class="char-id">STORMID-${id}</span>
-                            <span class="char-name">${name}</span>
-                        </div>
-                    `;
-
-                    container.appendChild(card);
-                });
+                const [charRes, mapRes] = await Promise.all([
+                    fetch('character_list.json'),
+                    fetch('file_map.json')
+                ]);
+                allCharacters = await charRes.json();
+                fileMap = await mapRes.json();
+                renderGallery(allCharacters);
             } catch (err) {
-                console.error('Failed to load character list:', err);
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-gold);">Rendition data pending... check back after the Kraken finishes.</div>`;
+                console.error('Init failed:', err);
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-gold);">Archive data not found.</div>`;
             }
         }
 
-        loadGallery();
+        function renderGallery(characters) {
+            container.innerHTML = '';
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                
+                const nameParts = char.split('_');
+                const id = nameParts[0];
+                const cleanId = char.replace('.png', '');
+                const name = nameParts.slice(1).join(' ').replace('.png', '');
+
+                card.innerHTML = `
+                    <img src="characters/${char}" alt="${name}" loading="lazy">
+                    <div class="card-overlay">
+                        <span class="char-id">STORMID-${id}</span>
+                        <span class="char-name">${name}</span>
+                        <button class="download-btn" onclick="downloadZip(event, '${cleanId}')">
+                            <span>📦 Download Assets</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function downloadZip(event, charId) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            const files = fileMap[charId];
+
+            if (!files) {
+                alert(`No asset manifest found for ${charId}`);
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳ Preparing...</span>';
+                
+                const zip = new JSZip();
+                const total = files.length;
+                let done = 0;
+
+                const fetchPromises = files.map(async (relPath) => {
+                    const url = `${BASE_RAW_URL}${charId}/${relPath}`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`Failed: ${relPath}`);
+                    const blob = await res.blob();
+                    zip.file(relPath, blob);
+                    done++;
+                    btn.innerHTML = `<span>⚡ ${done}/${total}</span>`;
+                });
+
+                await Promise.all(fetchPromises);
+                
+                btn.innerHTML = '<span>📦 Zipping...</span>';
+                const content = await zip.generateAsync({type: 'blob'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${charId}_Live2D.zip`;
+                link.click();
+                
+                btn.innerHTML = '<span>✅ Ready!</span>';
+            } catch (err) {
+                console.error('Download error:', err);
+                btn.innerHTML = '<span>❌ Failed</span>';
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }, 3000);
+            }
+        }
+
+        searchInput.addEventListener('input', e => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allCharacters.filter(c => c.toLowerCase().includes(query));
+            renderGallery(filtered);
+        });
+
+        init();
     </script>
 </body>
 </html>

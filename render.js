@@ -73,9 +73,18 @@ async function runBatch() {
 
             const modelUrl = `${HOST}/live2d/roles/${folder}/${modelJsonName}`;
 
-            await page.evaluate(async (url) => {
-                await window.renderModel(url);
+            const renderError = await page.evaluate(async (url) => {
+                try {
+                    await window.renderModel(url);
+                    return null;
+                } catch (e) {
+                    return e.message || e.toString();
+                }
             }, modelUrl);
+
+            if (renderError) {
+                throw new Error(renderError);
+            }
 
             const rawPath = path.join(outputDir, `${folder}_raw.png`);
             await page.screenshot({ path: rawPath, omitBackground: true });

@@ -1,6 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 
+window.PIXI = PIXI;
+
 // PIXI 7 Settings
 PIXI.settings.PRECISION_FRAGMENT = 'highp';
 PIXI.settings.PREFER_CREATE_IMAGE_BITMAP = false;
@@ -45,7 +47,27 @@ window.renderModel = async function(modelUrl) {
             }
 
             console.log('Loading Live2DModel (PIXI 7)...');
-            const model = await Live2DModel.from(modelUrl);
+            
+            // Intercept and fix texture order (Bloom at the end)
+            const response = await fetch(modelUrl);
+            const modelSettings = await response.json();
+            
+            if (modelSettings.FileReferences && modelSettings.FileReferences.Textures) {
+                const textures = modelSettings.FileReferences.Textures;
+                const bloom = textures.filter(t => t.toLowerCase().includes('_bloom'));
+                const main = textures.filter(t => !t.toLowerCase().includes('_bloom'));
+                
+                if (bloom.length > 0) {
+                    modelSettings.FileReferences.Textures = [...main, ...bloom];
+                    console.log('Texture order corrected: Blooms pushed to end.');
+                }
+            }
+
+            modelSettings.url = modelUrl;
+
+            const model = await Live2DModel.from(modelSettings, {
+                autoUpdate: true
+            });
             console.log('Model loaded successfully.');
             
             // PIXI 7 / Live2D Beta 0.5.0 handling
