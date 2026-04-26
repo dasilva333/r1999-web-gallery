@@ -61,7 +61,16 @@ async function runBatch() {
         console.log(`[Batch] [${i + 1}/${folders.length}] Processing ${folder}...`);
 
         try {
-            const modelJsonName = `${folder}.model3.json`;
+            // SMART DISCOVERY: Find the actual .model3.json file inside the folder
+            const folderPath = path.join(rolesDir, folder);
+            const files = fs.readdirSync(folderPath);
+            const modelJsonName = files.find(f => f.endsWith('.model3.json'));
+
+            if (!modelJsonName) {
+                console.warn(`[Skip] No .model3.json found in ${folder}`);
+                continue;
+            }
+
             const modelUrl = `${HOST}/live2d/roles/${folder}/${modelJsonName}`;
 
             await page.evaluate(async (url) => {
