@@ -308,8 +308,35 @@
                     const url = `${BASE_RAW_URL}${charId}/${relPath}`;
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(`Failed: ${relPath}`);
-                    const blob = await res.blob();
-                    zip.file(relPath, blob);
+
+                    // Bloom Fix: Intercept and re-order textures in-memory
+                    if (relPath.endsWith('.model3.json')) {
+                        try {
+                            const data = await res.json();
+                            if (data.FileReferences && data.FileReferences.Textures) {
+                                const textures = data.FileReferences.Textures;
+                                const bloom = textures.filter(t => t.toLowerCase().includes('_bloom'));
+                                const main = textures.filter(t => !t.toLowerCase().includes('_bloom'));
+                                
+                                if (bloom.length > 0) {
+                                    data.FileReferences.Textures = [...main, ...bloom];
+                                    zip.file(relPath, JSON.stringify(data, null, 2));
+                                } else {
+                                    zip.file(relPath, JSON.stringify(data, null, 2));
+                                }
+                            } else {
+                                zip.file(relPath, JSON.stringify(data, null, 2));
+                            }
+                        } catch (e) {
+                            console.warn('JSON Fix failed, falling back to blob:', e);
+                            const blob = await res.blob();
+                            zip.file(relPath, blob);
+                        }
+                    } else {
+                        const blob = await res.blob();
+                        zip.file(relPath, blob);
+                    }
+
                     done++;
                     btn.innerHTML = `<span>⚡ ${done}/${total}</span>`;
                 });
