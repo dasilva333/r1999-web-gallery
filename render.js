@@ -3,10 +3,9 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 
-const PORT = 3190;
+const PORT = 3210;
 const HOST = `http://127.0.0.1:${PORT}`;
 
-// Setup Express server to serve the local files
 const app = express();
 app.use(express.static(__dirname));
 
@@ -22,7 +21,6 @@ async function runBatch() {
 
     console.log(`[Batch] Found ${folders.length} characters to process.`);
 
-    console.log('[Puppeteer] Launching headless browser...');
     const browser = await puppeteer.launch({
         headless: true,
         executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -35,15 +33,12 @@ async function runBatch() {
     });
 
     const page = await browser.newPage();
-    // Use 5000x5000 viewport to match our massive PIXI canvas
     await page.setViewport({ width: 5000, height: 5000, deviceScaleFactor: 1 });
 
     page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
 
-    // Navigate to our template
     await page.goto(`${HOST}/template.html`, { waitUntil: 'networkidle0' });
 
-    // Load the bundle directly from file
     const bundlePath = path.join(__dirname, 'bundle.js');
     await page.addScriptTag({ path: bundlePath });
 
@@ -52,16 +47,17 @@ async function runBatch() {
         fs.mkdirSync(outputDir);
     }
 
-    // Wait for the renderer to be ready
     await page.waitForFunction(() => typeof window.renderModel === 'function', { timeout: 30000 });
 
     for (let i = 0; i < folders.length; i++) {
         const folder = folders[i];
         
-        // TEST FILTER: Wajueyishu (silhouette) and Pikelesi (crop)
-        if (folder !== '306301_pikelesi' && folder !== '306402_wajueyishu') continue;
-
         const outputPath = path.join(outputDir, `${folder}.png`);
+        // SKIP IF ALREADY DONE (To save time/resumes)
+        if (fs.existsSync(outputPath)) {
+            console.log(`[Batch] [${i + 1}/${folders.length}] Skipping existing ${folder}...`);
+            continue;
+        }
         console.log(`[Batch] [${i + 1}/${folders.length}] Processing ${folder}...`);
 
         try {

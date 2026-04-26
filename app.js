@@ -1,29 +1,31 @@
 import * as PIXI from 'pixi.js';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 
-// Force high precision and disable ImageBitmap for headless stability
+// PIXI 7 Settings
 PIXI.settings.PRECISION_FRAGMENT = 'highp';
 PIXI.settings.PREFER_CREATE_IMAGE_BITMAP = false;
 
-console.log('Renderer bundle starting...');
+console.log('Renderer bundle starting (PIXI 7)...');
 
 let app;
-try {
-    app = new PIXI.Application({
-        width: 5000,
-        height: 5000,
-        backgroundAlpha: 0,
-        preserveDrawingBuffer: false,
-        resolution: 1,
-        autoDensity: true,
-        // CRITICAL: Ensure the renderer's alpha settings are compatible with Live2D
-        premultipliedAlpha: true
-    });
-    document.body.appendChild(app.view);
-    console.log('PIXI Application initialized.');
-} catch (err) {
-    console.error('PIXI Initialization failed:', err);
+async function initApp() {
+    try {
+        app = new PIXI.Application({
+            width: 5000,
+            height: 5000,
+            backgroundAlpha: 0,
+            preserveDrawingBuffer: false,
+            resolution: 1,
+            hello: true
+        });
+        document.body.appendChild(app.view);
+        console.log('PIXI 7 Application initialized.');
+    } catch (err) {
+        console.error('PIXI 7 Initialization failed:', err);
+    }
 }
+
+initApp();
 
 let currentModel = null;
 
@@ -31,17 +33,22 @@ window.renderModel = async function(modelUrl) {
     console.log('renderModel called for:', modelUrl);
     return new Promise(async (resolve, reject) => {
         try {
+            if (!app) {
+                console.log('Waiting for app initialization...');
+                await new Promise(r => setTimeout(r, 500));
+            }
+
             if (currentModel) {
                 app.stage.removeChild(currentModel);
                 currentModel.destroy();
                 currentModel = null;
             }
 
-            console.log('Loading Live2DModel...');
+            console.log('Loading Live2DModel (PIXI 7)...');
             const model = await Live2DModel.from(modelUrl);
             console.log('Model loaded successfully.');
             
-            // SILHOUETTE FIX: Ensure PMA is handled correctly by the model
+            // PIXI 7 / Live2D Beta 0.5.0 handling
             model.premultipliedAlpha = true;
             
             currentModel = model;
@@ -52,6 +59,7 @@ window.renderModel = async function(modelUrl) {
             const bounds = model.getLocalBounds();
             console.log(`Bounds: ${bounds.width.toFixed(0)}x${bounds.height.toFixed(0)}`);
             
+            // Keeping the 0.4 scale that worked for Pickles
             const targetSize = 5000 * 0.4;
             const scale = Math.min(targetSize / bounds.width, targetSize / bounds.height);
             
@@ -61,10 +69,11 @@ window.renderModel = async function(modelUrl) {
             model.x = (5000 / 2) - (bounds.x + bounds.width / 2) * scale;
             model.y = (5000 / 2) - (bounds.y + bounds.height / 2) * scale;
             
+            // PIXI 7 filter area
             model.filterArea = app.screen;
 
+            // PIXI 7 settled render
             setTimeout(() => {
-                // Render twice to ensure buffers are swapped and settled
                 model.update(16);
                 app.renderer.render(app.stage);
                 

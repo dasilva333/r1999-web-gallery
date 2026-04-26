@@ -1,1 +1,5 @@
-/node_modules
+live2d/
+node_modules/
+bundle.js
+package-lock.json
+*_raw.png
