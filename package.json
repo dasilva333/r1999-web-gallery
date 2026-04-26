@@ -1,0 +1,28 @@
+{
+  "name": "live2d-characters-reverse-1999",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myssal/Reverse-1999-CN-Asset.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/myssal/Reverse-1999-CN-Asset/issues"
+  },
+  "homepage": "https://github.com/myssal/Reverse-1999-CN-Asset#readme",
+  "dependencies": {
+    "esbuild": "^0.28.0",
+    "express": "^5.2.1",
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^6.5.10",
+    "puppeteer": "^24.42.0",
+    "sharp": "^0.34.5"
+  }
+}
