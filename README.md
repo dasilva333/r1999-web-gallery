@@ -3,7 +3,7 @@
 A high-fidelity, high-resolution archive of **Reverse 1999** Live2D models, rendered at 5000px resolution with perfect centering and automatic transparency trimming.
 
 ## 🔗 Live Gallery
-**[View the Archive on GitHub Pages](https://dasilva333.github.io/reverse-1999-live2d-archive/)**
+**[View the Archive on GitHub Pages](https://dasilva333.github.io/r1999-web-gallery/)**
 
 ## 📂 Project Overview
 This project uses a custom rendering pipeline to batch-process the game's Live2D assets into clean, transparent PNGs.
