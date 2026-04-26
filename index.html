@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse 1999 | Character Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050a0a;
+            --accent-gold: #c5a86d;
+            --accent-teal: #1a3a3a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(197, 168, 109, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(26, 58, 58, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(197, 168, 109, 0.1) 0%, transparent 50%);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            letter-spacing: 0.1em;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(197, 168, 109, 0.3);
+        }
+
+        .subtitle {
+            font-weight: 300;
+            letter-spacing: 0.4em;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        #gallery-container {
+            flex: 1;
+            padding: 60px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .character-card {
+            position: relative;
+            aspect-ratio: 2/3;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .character-card:hover {
+            transform: scale(1.03) rotate(1.5deg);
+            border-color: var(--accent-gold);
+            box-shadow: 0 20px 40px rgba(197, 168, 109, 0.2);
+            z-index: 10;
+        }
+
+        .character-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            transition: transform 0.6s ease;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
+        }
+
+        .character-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            transform: translateZ(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .char-id {
+            font-size: 0.7rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+
+        .char-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: capitalize;
+        }
+
+        /* Ambient particles / glow */
+        .ambient-glow {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at var(--mx) var(--my), rgba(197, 168, 109, 0.05) 0%, transparent 20%);
+            z-index: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-teal);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow" id="glow"></div>
+    
+    <header>
+        <h1>Reverse 1999</h1>
+        <div class="subtitle">Storm Preservation Initiative // Character Catalog</div>
+    </header>
+
+    <div id="gallery-container">
+        <!-- Will be populated via JS -->
+    </div>
+
+    <script>
+        // Track mouse for ambient glow
+        const glow = document.getElementById('glow');
+        window.addEventListener('mousemove', e => {
+            glow.style.setProperty('--mx', e.clientX + 'px');
+            glow.style.setProperty('--my', e.clientY + 'px');
+        });
+
+        // Fetch character data
+        async function loadGallery() {
+            const container = document.getElementById('gallery-container');
+            
+            try {
+                // We'll generate this list from the folder structure
+                const response = await fetch('character_list.json');
+                const characters = await response.json();
+
+                characters.forEach(char => {
+                    const card = document.createElement('div');
+                    card.className = 'character-card';
+                    
+                    const nameParts = char.split('_');
+                    const id = nameParts[0];
+                    const name = nameParts.slice(1).join(' ').replace('.png', '');
+
+                    card.innerHTML = `
+                        <img src="characters/${char}" alt="${name}" loading="lazy">
+                        <div class="card-overlay">
+                            <span class="char-id">STORMID-${id}</span>
+                            <span class="char-name">${name}</span>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Failed to load character list:', err);
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-gold);">Rendition data pending... check back after the Kraken finishes.</div>`;
+            }
+        }
+
+        loadGallery();
+    </script>
+</body>
+</html>
