@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse 1999 | Character Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050a0a;
+            --accent-gold: #c5a86d;
+            --accent-teal: #1a3a3a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(197, 168, 109, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(26, 58, 58, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(197, 168, 109, 0.1) 0%, transparent 50%);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            letter-spacing: 0.1em;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(197, 168, 109, 0.3);
+        }
+
+        .subtitle {
+            font-weight: 300;
+            letter-spacing: 0.4em;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        #gallery-container {
+            flex: 1;
+            padding: 60px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .character-card {
+            position: relative;
+            aspect-ratio: 2/3;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .character-card:hover {
+            transform: scale(1.03) rotate(1.5deg);
+            border-color: var(--accent-gold);
+            box-shadow: 0 20px 40px rgba(197, 168, 109, 0.2);
+            z-index: 10;
+        }
+
+        .character-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            transition: transform 0.6s ease;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
+        }
+
+        .character-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            transform: translateZ(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .char-id {
+            font-size: 0.7rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+
+        .char-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: capitalize;
+        }
+
+        /* Ambient particles / glow */
+        .ambient-glow {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at var(--mx) var(--my), rgba(197, 168, 109, 0.05) 0%, transparent 20%);
+            z-index: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-teal);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-gold);
+        }
+        .search-container {
+            max-width: 600px;
+            margin: 20px auto 0;
+            position: relative;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #search-input:focus {
+            border-color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(197, 168, 109, 0.1);
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: var(--accent-gold);
+            border: none;
+            border-radius: 6px;
+            color: var(--bg-deep);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .character-card:hover .download-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .download-btn:hover {
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(197, 168, 109, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow" id="glow"></div>
+    
+    <header>
+        <h1>Reverse 1999</h1>
+        <div class="subtitle">Storm Preservation Initiative // Character Catalog</div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for character ID or name...">
+        </div>
+    </header>
+
+    <div id="gallery-container">
+        <!-- Will be populated via JS -->
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const glow = document.getElementById('glow');
+        const container = document.getElementById('gallery-container');
+        const searchInput = document.getElementById('search-input');
+        const BASE_RAW_URL = 'https://raw.githubusercontent.com/myssal/Reverse-1999-CN-Asset/master/live2d/roles/';
+        
+        let allCharacters = [];
+        let fileMap = {};
+
+        // Track mouse for ambient glow
+        window.addEventListener('mousemove', e => {
+            glow.style.setProperty('--mx', e.clientX + 'px');
+            glow.style.setProperty('--my', e.clientY + 'px');
+        });
+
+        async function init() {
+            try {
+                const [charRes, mapRes] = await Promise.all([
+                    fetch('character_list.json'),
+                    fetch('file_map.json')
+                ]);
+                allCharacters = await charRes.json();
+                fileMap = await mapRes.json();
+                renderGallery(allCharacters);
+            } catch (err) {
+                console.error('Init failed:', err);
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-gold);">Archive data not found.</div>`;
+            }
+        }
+
+        function renderGallery(characters) {
+            container.innerHTML = '';
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                
+                const nameParts = char.split('_');
+                const id = nameParts[0];
+                const cleanId = char.replace('.png', '');
+                const name = nameParts.slice(1).join(' ').replace('.png', '');
+
+                card.innerHTML = `
+                    <img src="characters/${char}" alt="${name}" loading="lazy">
+                    <div class="card-overlay">
+                        <span class="char-id">STORMID-${id}</span>
+                        <span class="char-name">${name}</span>
+                        <button class="download-btn" onclick="downloadZip(event, '${cleanId}')">
+                            <span>📦 Download Assets</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function downloadZip(event, charId) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            const files = fileMap[charId];
+
+            if (!files) {
+                alert(`No asset manifest found for ${charId}`);
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳ Preparing...</span>';
+                
+                const zip = new JSZip();
+                const total = files.length;
+                let done = 0;
+
+                const fetchPromises = files.map(async (relPath) => {
+                    const url = `${BASE_RAW_URL}${charId}/${relPath}`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`Failed: ${relPath}`);
+
+                    // Bloom Fix: Intercept and re-order textures in-memory
+                    if (relPath.endsWith('.model3.json')) {
+                        try {
+                            const data = await res.json();
+                            if (data.FileReferences && data.FileReferences.Textures) {
+                                const textures = data.FileReferences.Textures;
+                                const bloom = textures.filter(t => t.toLowerCase().includes('_bloom'));
+                                const main = textures.filter(t => !t.toLowerCase().includes('_bloom'));
+                                
+                                if (bloom.length > 0) {
+                                    data.FileReferences.Textures = [...main, ...bloom];
+                                    zip.file(relPath, JSON.stringify(data, null, 2));
+                                } else {
+                                    zip.file(relPath, JSON.stringify(data, null, 2));
+                                }
+                            } else {
+                                zip.file(relPath, JSON.stringify(data, null, 2));
+                            }
+                        } catch (e) {
+                            console.warn('JSON Fix failed, falling back to blob:', e);
+                            const blob = await res.blob();
+                            zip.file(relPath, blob);
+                        }
+                    } else {
+                        const blob = await res.blob();
+                        zip.file(relPath, blob);
+                    }
+
+                    done++;
+                    btn.innerHTML = `<span>⚡ ${done}/${total}</span>`;
+                });
+
+                await Promise.all(fetchPromises);
+                
+                btn.innerHTML = '<span>📦 Zipping...</span>';
+                const content = await zip.generateAsync({type: 'blob'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${charId}_Live2D.zip`;
+                link.click();
+                
+                btn.innerHTML = '<span>✅ Ready!</span>';
+            } catch (err) {
+                console.error('Download error:', err);
+                btn.innerHTML = '<span>❌ Failed</span>';
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }, 3000);
+            }
+        }
+
+        searchInput.addEventListener('input', e => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allCharacters.filter(c => c.toLowerCase().includes(query));
+            renderGallery(filtered);
+        });
+
+        init();
+    </script>
+</body>
+</html>
