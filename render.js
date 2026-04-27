@@ -14,7 +14,7 @@ const server = app.listen(PORT, () => {
 });
 
 async function runBatch() {
-    const rolesDir = path.join(__dirname, 'live2d', 'roles');
+    const rolesDir = path.join(__dirname, 'myssal_reverse_1999_cn_asset', 'live2d', 'roles');
     const folders = fs.readdirSync(rolesDir).filter(f => {
         return fs.statSync(path.join(rolesDir, f)).isDirectory();
     });
@@ -71,7 +71,7 @@ async function runBatch() {
                 continue;
             }
 
-            const modelUrl = `${HOST}/live2d/roles/${folder}/${modelJsonName}`;
+            const modelUrl = `${HOST}/myssal_reverse_1999_cn_asset/live2d/roles/${folder}/${modelJsonName}`;
 
             const renderError = await page.evaluate(async (url) => {
                 try {
